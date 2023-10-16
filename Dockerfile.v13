@@ -33,7 +33,7 @@ RUN echo "Cloning and installing vroom release ${VROOM_RELEASE}..." && \
     make -C /vroom/src -j$(nproc) && \
     cd /
 
-ARG VROOM_EXPRESS_AWS_LAMBDA_RELEASE=v0.0.2
+ARG VROOM_EXPRESS_AWS_LAMBDA_RELEASE=master
 
 RUN echo "Cloning and installing vroom-express-aws-lambda release ${VROOM_EXPRESS_AWS_LAMBDA_RELEASE}..." && \
     git clone https://github.com/jamesjjk/vroom-express-aws-lambda.git && \
