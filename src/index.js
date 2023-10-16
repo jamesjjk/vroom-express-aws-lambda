@@ -135,13 +135,14 @@ function sizeCheckCallback(maxLocationNumber, maxVehicleNumber) {
 const vroomCommand = args.path + 'vroom';
 const options = [];
 options.push('-r', args.router);
+const profiles = [];
 if (args.router !== 'libosrm') {
   const routingServers = config.routingServers;
   for (const profileName in routingServers[args.router]) {
     const profile = routingServers[args.router][profileName];
     if ('host' in profile && 'port' in profile) {
-      options.push('-a', profileName + ':' + profile.host);
-      options.push('-p', profileName + ':' + profile.port);
+      profiles.push('-a', profileName + ':' + profile.host);
+      profiles.push('-p', profileName + ':' + profile.port);
     } else {
       console.error(
         "Incomplete configuration: profile '" +
@@ -160,11 +161,12 @@ if (args.planmode) {
 }
 
 function execCallback(req, res) {
-  const reqOptions = options.slice();
+  let reqOptions = options.slice();
 
   // Default command-line values.
   let nbThreads = args.threads;
   let explorationLevel = args.explore;
+  let overideServers = false;
 
   if (args.override && 'options' in req.body) {
     // Optionally override defaults.
@@ -177,6 +179,18 @@ function execCallback(req, res) {
     // Set plan mode.
     if (!args.planmode && 'c' in req.body.options && req.body.options.c) {
       reqOptions.push('-c');
+    }
+
+    if ('servers' in req.body.options && req.body.options.servers) {
+      const servers = req.body.options.servers;
+      for (const profileName in servers) {
+        const profile = servers[profileName];
+        if ('host' in profile && 'port' in profile) {
+          overideServers = true;
+          reqOptions.push('-a', profileName + ':' + profile.host);
+          reqOptions.push('-p', profileName + ':' + profile.port);
+        }
+      }
     }
 
     // Adjust number of threads.
@@ -196,6 +210,10 @@ function execCallback(req, res) {
 
   reqOptions.push('-t ' + nbThreads);
   reqOptions.push('-x ' + explorationLevel);
+
+  if (!overideServers) {
+    reqOptions = reqOptions.concat(profiles.slice());
+  }
 
   const timestamp = Math.floor(Date.now() / 1000); //eslint-disable-line
   const fileName = '/tmp/' + timestamp + '_' + uuid.v1() + '.json';

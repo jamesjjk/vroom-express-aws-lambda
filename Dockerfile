@@ -23,17 +23,15 @@ RUN echo "Updating apt-get and installing dependencies..." && \
   libglpk-dev \
 	pkg-config
 
-ARG VROOM_RELEASE=v1.11.0
+ARG VROOM_RELEASE=v1.13.0
 
 RUN echo "Cloning and installing vroom release ${VROOM_RELEASE}..." && \
-    git clone  --recurse-submodules https://github.com/VROOM-Project/vroom.git && \
+    git clone --branch $VROOM_RELEASE --recurse-submodules https://github.com/VROOM-Project/vroom.git && \
     cd vroom && \
-    git fetch --tags && \
-    git checkout -q $VROOM_RELEASE && \
     make -C /vroom/src -j$(nproc) && \
     cd /
 
-ARG VROOM_EXPRESS_AWS_LAMBDA_RELEASE=v0.0.1
+ARG VROOM_EXPRESS_AWS_LAMBDA_RELEASE=master
 
 # RUN echo "Cloning and installing vroom-express-aws-lambda release ${VROOM_EXPRESS_AWS_LAMBDA_RELEASE}..." && \
 #     git clone https://github.com/jamesjjk/vroom-express-aws-lambda.git && \

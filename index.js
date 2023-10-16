@@ -4,8 +4,12 @@ exports.handler = serverlessExpress({app});
 
 function mapHttpRequest({event}) {
   console.log(event);
+  let body = event.body || {};
+  try {
+    body = JSON.parse(event.body);
+  } catch (er) {}
   return {
-    body: event.body || {},
+    body: body,
     headers: event.headers || {},
     method: event.httpMethod || 'GET',
     path: event.path || '/health',
