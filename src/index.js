@@ -1,11 +1,11 @@
-const { spawn } = require('child_process');
+const {spawn} = require('child_process');
 const express = require('express');
 const fs = require('fs');
 const helmet = require('helmet');
-const morgan = require('morgan');
+// const morgan = require('morgan');
 const uuid = require('uuid');
 const config = require('./config.js');
-const rfs = require('rotating-file-stream');
+// const rfs = require('rotating-file-stream');
 
 // App and loaded modules.
 const app = express();
@@ -30,12 +30,12 @@ const args = config.cliArgs;
 app.use(express.json({limit: args.limit}));
 app.use(express.urlencoded({extended: true, limit: args.limit}));
 
-const accessLogStream = rfs.createStream(args.logdir + '/access.log', {
-  compress: 'gzip',
-  size: args.logsize,
-});
-
-app.use(morgan('combined', {stream: accessLogStream}));
+// const accessLogStream = rfs.createStream(args.logdir + '/access.log', {
+//   compress: 'gzip',
+//   size: args.logsize,
+// });
+//
+// app.use(morgan('combined', {stream: accessLogStream}));
 
 app.use(helmet());
 
@@ -60,7 +60,7 @@ app.use((err, req, res, next) => {
 function now() {
   const date = new Date();
   return date.toUTCString();
-};
+}
 
 function fileExists(filePath) {
   try {
@@ -68,7 +68,7 @@ function fileExists(filePath) {
   } catch (err) {
     return false;
   }
-};
+}
 
 // Callback for size and some input validity checks.
 function sizeCheckCallback(maxLocationNumber, maxVehicleNumber) {
@@ -130,7 +130,7 @@ function sizeCheckCallback(maxLocationNumber, maxVehicleNumber) {
     }
     next();
   };
-};
+}
 
 const vroomCommand = args.path + 'vroom';
 const options = [];
@@ -198,7 +198,7 @@ function execCallback(req, res) {
   reqOptions.push('-x ' + explorationLevel);
 
   const timestamp = Math.floor(Date.now() / 1000); //eslint-disable-line
-  const fileName = args.logdir + '/' + timestamp + '_' + uuid.v1() + '.json';
+  const fileName = '/tmp/' + timestamp + '_' + uuid.v1() + '.json';
   try {
     fs.writeFileSync(fileName, JSON.stringify(req.body));
   } catch (err) {
@@ -271,7 +271,7 @@ function execCallback(req, res) {
       fs.unlinkSync(fileName);
     }
   });
-};
+}
 
 app.post(args.baseurl, [
   sizeCheckCallback(args.maxlocations, args.maxvehicles),
@@ -295,6 +295,12 @@ app.get(args.baseurl + 'health', (req, res) => {
     status = HTTP_INTERNALERROR_CODE;
   });
 
+  let solution = '';
+
+  vroom.stdout.on('data', data => {
+    solution += data.toString();
+  });
+
   vroom.stderr.on('data', err => {
     // called when vroom throws an error and sends the error message back
     msg = err.toString();
@@ -305,12 +311,14 @@ app.get(args.baseurl + 'health', (req, res) => {
     if (code !== config.vroomErrorCodes.ok) {
       console.error(`${now()}: ${msg}`);
     }
-    res.status(status).send();
+    res.status(status).send(solution);
   });
 });
 
-const server = app.listen(args.port, () => {
-  console.log('vroom-express listening on port ' + args.port + '!');
-});
+// const server = app.listen(args.port, () => {
+//   console.log('vroom-express listening on port ' + args.port + '!');
+// });
+//
+// server.setTimeout(args.timeout);
 
-server.setTimeout(args.timeout);
+module.exports = app;
